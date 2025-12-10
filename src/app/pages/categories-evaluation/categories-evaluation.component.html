@@ -1,0 +1,23 @@
+<div class="page-header">
+  <h1>Catégories d'Évaluation</h1>
+</div>
+
+<div class="content-card">
+  <div class="card-header">
+    <h2>Liste des Catégories</h2>
+    <p class="card-subtitle">Gérez les catégories d'évaluation par type de permis</p>
+  </div>
+
+  <div class="categories-list">
+    <div class="category-card" *ngFor="let categorie of categories">
+      <div class="category-header">
+        <h3>{{ categorie.nom }}</h3>
+        <span class="type-badge">{{ categorie.typePermis }}</span>
+      </div>
+      <div class="category-score">
+        <span class="score-label">Score Maximum:</span>
+        <span class="score-value">{{ categorie.scoreMax }} points</span>
+      </div>
+    </div>
+  </div>
+</div>

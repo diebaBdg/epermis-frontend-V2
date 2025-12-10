@@ -1,0 +1,21 @@
+<div class="page-header">
+  <h1>Types de Permis</h1>
+</div>
+
+<div class="content-card">
+  <div class="card-header">
+    <h2>Liste des Types de Permis</h2>
+    <p class="card-subtitle">Gérez les différents types de permis de conduire</p>
+  </div>
+
+  <div class="types-grid">
+    <div class="type-card" *ngFor="let type of typesPermis">
+      <div class="type-icon">{{ type.code }}</div>
+      <h3>{{ type.libelle }}</h3>
+      <p>{{ type.description }}</p>
+      <span class="badge" [class.badge-active]="type.actif" [class.badge-inactive]="!type.actif">
+        {{ type.actif ? 'Actif' : 'Inactif' }}
+      </span>
+    </div>
+  </div>
+</div>
