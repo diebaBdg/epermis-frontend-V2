@@ -38,30 +38,57 @@ export class DashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.loading = true;
 
-    this.candidatService.getCandidats().subscribe({
-      next: (candidats) => {
-        this.stats.totalCandidats = candidats.length;
+    this.candidatService.getStats().subscribe({
+      next: (statsData: any) => {
+        if (statsData) {
+          this.stats.totalCandidats = statsData.totalCandidats || 0;
+        }
       },
-      error: (err) => console.error('Error loading candidats:', err)
+      error: (err) => {
+        console.error('Error loading candidat stats:', err);
+        this.candidatService.getCandidats().subscribe({
+          next: (candidats) => {
+            this.stats.totalCandidats = candidats.length;
+          },
+          error: () => {}
+        });
+      }
     });
 
     this.inspecteurService.getInspecteurs().subscribe({
       next: (inspecteurs) => {
         this.stats.inspecteursActifs = inspecteurs.filter(i => i.statut === 'ACTIF').length;
+        this.inspecteursDisponibles = inspecteurs.slice(0, 4);
       },
       error: (err) => console.error('Error loading inspecteurs:', err)
     });
 
-    this.evaluationService.getMesEvaluations().subscribe({
-      next: (evaluations) => {
-        this.stats.totalEvaluations = evaluations.length;
-        this.recentEvaluations = evaluations.slice(0, 4);
+    this.evaluationService.getStats().subscribe({
+      next: (statsData: any) => {
+        if (statsData) {
+          this.stats.totalEvaluations = statsData.totalEvaluations || 0;
+        }
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading evaluations:', err);
-        this.loading = false;
+        console.error('Error loading evaluation stats:', err);
+        this.evaluationService.getMesEvaluations().subscribe({
+          next: (evaluations) => {
+            this.stats.totalEvaluations = evaluations.length;
+            this.loading = false;
+          },
+          error: () => {
+            this.loading = false;
+          }
+        });
       }
+    });
+
+    this.evaluationService.getMesEvaluations().subscribe({
+      next: (evaluations) => {
+        this.recentEvaluations = evaluations.slice(0, 4);
+      },
+      error: (err) => console.error('Error loading recent evaluations:', err)
     });
 
     this.typePermisService.getTypesPermis().subscribe({
@@ -69,13 +96,6 @@ export class DashboardComponent implements OnInit {
         this.stats.typesPermis = types.filter(t => t.actif).length;
       },
       error: (err) => console.error('Error loading types permis:', err)
-    });
-
-    this.inspecteurService.getInspecteursDisponibles().subscribe({
-      next: (inspecteurs) => {
-        this.inspecteursDisponibles = inspecteurs.slice(0, 4);
-      },
-      error: (err) => console.error('Error loading inspecteurs disponibles:', err)
     });
   }
 
