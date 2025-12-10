@@ -16,6 +16,23 @@ export class InspecteursComponent implements OnInit {
   filteredInspecteurs: User[] = [];
   searchQuery = '';
   loading = false;
+  showModal = false;
+  isEditMode = false;
+  selectedInspecteur: User | null = null;
+  viewMode: 'grid' | 'table' = 'grid';
+
+  inspecteurForm = {
+    matricule: '',
+    username: '',
+    nom: '',
+    prenom: '',
+    telephone: '',
+    email: '',
+    password: '',
+    grade: '',
+    zoneAffectation: '',
+    statut: 'ACTIF'
+  };
 
   constructor(private inspecteurService: InspecteurService) {}
 
@@ -51,7 +68,124 @@ export class InspecteursComponent implements OnInit {
     }
   }
 
+  toggleViewMode(mode: 'grid' | 'table'): void {
+    this.viewMode = mode;
+  }
+
   getInitials(inspecteur: User): string {
     return (inspecteur.prenom[0] + inspecteur.nom[0]).toUpperCase();
+  }
+
+  openCreateModal(): void {
+    this.isEditMode = false;
+    this.selectedInspecteur = null;
+    this.inspecteurForm = {
+      matricule: '',
+      username: '',
+      nom: '',
+      prenom: '',
+      telephone: '',
+      email: '',
+      password: '',
+      grade: '',
+      zoneAffectation: '',
+      statut: 'ACTIF'
+    };
+    this.showModal = true;
+  }
+
+  openEditModal(inspecteur: User): void {
+    this.isEditMode = true;
+    this.selectedInspecteur = inspecteur;
+    this.inspecteurForm = {
+      matricule: inspecteur.matricule,
+      username: inspecteur.username,
+      nom: inspecteur.nom,
+      prenom: inspecteur.prenom,
+      telephone: inspecteur.telephone,
+      email: inspecteur.email || '',
+      password: '',
+      grade: inspecteur.grade || '',
+      zoneAffectation: inspecteur.zoneAffectation || '',
+      statut: inspecteur.statut || 'ACTIF'
+    };
+    this.showModal = true;
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.inspecteurForm = {
+      matricule: '',
+      username: '',
+      nom: '',
+      prenom: '',
+      telephone: '',
+      email: '',
+      password: '',
+      grade: '',
+      zoneAffectation: '',
+      statut: 'ACTIF'
+    };
+    this.selectedInspecteur = null;
+  }
+
+  onSubmit(): void {
+    if (!this.inspecteurForm.nom || !this.inspecteurForm.prenom || !this.inspecteurForm.username) {
+      alert('Veuillez remplir les champs obligatoires');
+      return;
+    }
+
+    this.loading = true;
+    const formData = { ...this.inspecteurForm };
+
+    if (this.isEditMode && this.selectedInspecteur) {
+           
+      this.inspecteurService.updateUser(this.selectedInspecteur.id, formData).subscribe({
+        next: () => {
+          this.loadInspecteurs();
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error('Error updating inspecteur:', err);
+          this.loading = false;
+          alert('Erreur lors de la mise à jour de l\'inspecteur');
+        }
+      });
+    } else {
+      // Pour la création, le mot de passe est requis
+      if (!formData.password) {
+        alert('Le mot de passe est requis pour la création');
+        this.loading = false;
+        return;
+      }
+      
+      this.inspecteurService.createInspecteurComplet(formData).subscribe({
+        next: () => {
+          this.loadInspecteurs();
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error('Error creating inspecteur:', err);
+          this.loading = false;
+          alert('Erreur lors de la création de l\'inspecteur');
+        }
+      });
+    }
+  }
+
+  deleteInspecteur(inspecteur: User): void {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'inspecteur ${inspecteur.prenom} ${inspecteur.nom} ?`)) {
+      return;
+    }
+
+    this.inspecteurService.deleteUser(inspecteur.id).subscribe({
+      next: () => {
+        this.loadInspecteurs();
+      },
+      error: (err) => {
+        console.error('Error deleting inspecteur:', err);
+        alert('Erreur lors de la suppression de l\'inspecteur');
+      }
+    });
   }
 }

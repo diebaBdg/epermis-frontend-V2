@@ -20,3 +20,12 @@ export interface CategorieEvaluationPermis {
   pourcentage?: number;
   valide?: boolean;
 }
+
+export interface EvaluationStats {
+  [x: string]: undefined;
+  totalEvaluations: number;
+  admis: number;
+  ajoure: number;
+  tauxReussite: number;
+  tauxEchec: number;
+}

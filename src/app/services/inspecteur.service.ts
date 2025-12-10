@@ -9,6 +9,7 @@ import { User } from '../models/user.model';
 })
 export class InspecteurService {
   private apiUrl = `${environment.apiUrl}/inspecteurs`;
+  private usersUrl = `${environment.apiUrl}/users`;
 
   constructor(private http: HttpClient) {}
 
@@ -30,5 +31,31 @@ export class InspecteurService {
 
   getPerformances(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/performances`);
+  }
+  
+  createUser(userData: any): Observable<User> {
+    return this.http.post<User>(this.usersUrl, userData);
+  }
+
+  updateUser(id: string, userData: any): Observable<User> {
+    return this.http.put<User>(`${this.usersUrl}/${id}`, userData);
+  }
+
+  deleteUser(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.usersUrl}/${id}`);
+  }
+
+  getUsersByRole(role: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.usersUrl}/by-role/${role}`);
+  }
+
+  // Méthode spécifique pour créer un inspecteur
+  createInspecteurComplet(data: any): Observable<User> {
+    const inspecteurData = {
+      ...data,
+      role: 'INSPECTEUR',
+      statut: 'ACTIF'
+    };
+    return this.createUser(inspecteurData);
   }
 }

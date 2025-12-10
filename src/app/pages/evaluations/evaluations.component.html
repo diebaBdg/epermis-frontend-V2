@@ -1,33 +1,100 @@
 <div class="page-header">
   <h1>Évaluations</h1>
+  <div *ngIf="userName" class="user-info">
+    <span class="role-badge" [class.badge-admin]="userRole === 'ADMIN'" [class.badge-inspecteur]="userRole === 'INSPECTEUR'">
+      {{ userRole }}
+    </span>
+    <span class="user-name">{{ userName }}</span>
+  </div>
 </div>
 
-<div class="content-card">
-  <div class="card-header">
-    <h2>Liste des Évaluations</h2>
-    <p class="card-subtitle">Consultez toutes les évaluations effectuées</p>
+<!-- Cartes de statistiques -->
+<div class="stats-grid" *ngIf="!loading && stats.totalEvaluations > 0">
+  <!-- Total Évaluations -->
+  <div class="stat-card stat-card-blue">
+    <div class="stat-icon stat-icon-blue">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 12H15M9 16H15M9 8H15M5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ stats.totalEvaluations }}</div>
+    <div class="stat-title">Total Évaluations</div>
   </div>
 
-  <div class="table-container">
+  <!-- Réussis -->
+  <div class="stat-card stat-card-green">
+    <div class="stat-icon stat-icon-green">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ stats.admis }}</div>
+    <div class="stat-title">Réussis</div>
+    <div class="stat-subtitle">{{ stats.tauxReussite.toFixed(1) }}% de réussite</div>
+  </div>
+
+  <!-- Score Moyen -->
+  <div class="stat-card stat-card-purple">
+    <div class="stat-icon stat-icon-purple">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 8V16M12 11V16M8 14V16M6 20H18C19.1046 20 20 19.1046 20 18V6C20 4.89543 19.1046 4 18 4H6C4.89543 4 4 4.89543 4 6V18C4 19.1046 4.89543 20 6 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ stats.scoreMoyen || calculateAverageScore() }}/100</div>
+    <div class="stat-title">Score Moyen</div>
+  </div>
+
+  <!-- Taux de Réussite -->
+  <div class="stat-card stat-card-cyan">
+    <div class="stat-icon stat-icon-cyan">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 7H21M13 12H21M13 17H21M6 10C6 11.6569 4.65685 13 3 13C1.34315 13 0 11.6569 0 10C0 8.34315 1.34315 7 3 7C4.65685 7 6 8.34315 6 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ stats.tauxReussite.toFixed(1) }}%</div>
+    <div class="stat-title">Taux de Réussite</div>
+  </div>
+</div>
+
+<!-- Tableau des évaluations -->
+<div class="content-card" *ngIf="!loading">
+  <div class="card-header">
+    <h2>
+      <span *ngIf="userRole === 'ADMIN'">Toutes les Évaluations</span>
+      <span *ngIf="userRole === 'INSPECTEUR'">Mes Évaluations</span>
+    </h2>
+    <p class="card-subtitle">
+      <span *ngIf="userRole === 'ADMIN'">Historique complet de toutes les évaluations du système</span>
+      <span *ngIf="userRole === 'INSPECTEUR'">Historique de toutes mes évaluations effectuées</span>
+    </p>
+  </div>
+
+  <div class="table-container" *ngIf="evaluationsWithInspecteurs.length > 0">
     <table class="data-table">
       <thead>
         <tr>
           <th>N° Dossier</th>
-          <th>Inspecteur</th>
+          <th *ngIf="userRole === 'ADMIN'">Inspecteur</th>
           <th>Type Permis</th>
           <th>Date</th>
+          <th>Score</th>
           <th>Statut</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let evaluation of evaluations">
+        <tr *ngFor="let evaluation of evaluationsWithInspecteurs">
           <td><span class="dossier-number">{{ evaluation.numeroDossierCandidat }}</span></td>
-          <td>{{ evaluation.matriculeInspecteur }}</td>
-          <td>{{ evaluation.codeTypePermis }}</td>
-          <td>{{ evaluation.dateEnregistrement | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td *ngIf="userRole === 'ADMIN'">{{ evaluation.inspecteurDisplay }}</td>
           <td>
-            <span class="badge" [class.badge-success]="evaluation.statut === 'ADMIS'" [class.badge-danger]="evaluation.statut === 'AJOURNE'">
-              {{ evaluation.statut }}
+            <span class="type-badge">{{ evaluation.codeTypePermis }}</span>
+          </td>
+          <td>{{ formatDate(evaluation.dateEnregistrement) }}</td>
+          <td>
+            <span class="score-value">{{ getEvaluationScore(evaluation) }}</span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getBadgeClass(evaluation.statut)">
+              {{ getStatutText(evaluation.statut) }}
             </span>
           </td>
         </tr>
