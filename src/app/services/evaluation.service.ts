@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { catchError, map, Observable, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { Evaluation, CategorieEvaluationPermis, EvaluationStats } from '../models/evaluation.model';
@@ -229,13 +229,4 @@ export class EvaluationService {
       headers: this.getAuthHeaders()
     });
   }
-}
-
-function tap(arg0: (inspecteurs: any) => void): import("rxjs").OperatorFunction<User[], User[]> {
-  throw new Error('Function not implemented.');
-}
-
-
-function of(cached: any): Observable<any> {
-  throw new Error('Function not implemented.');
 }

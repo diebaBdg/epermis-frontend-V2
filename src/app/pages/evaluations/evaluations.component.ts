@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable, forkJoin, map } from 'rxjs';
+import { Observable, forkJoin, map, of } from 'rxjs';
 import { EvaluationService } from '../../services/evaluation.service';
 import { AuthService } from '../../services/auth.service';
 import { InspecteurService } from '../../services/inspecteur.service';
@@ -18,19 +18,23 @@ export class EvaluationsComponent implements OnInit {
   evaluations: Evaluation[] = [];
   evaluationsWithInspecteurs: any[] = [];
   inspecteursMap: Map<string, User> = new Map();
-  
+
   stats: EvaluationStats = {
     totalEvaluations: 0,
     admis: 0,
     ajoure: 0,
     tauxReussite: 0,
-    tauxEchec: 0
-    };
-  
+    tauxEchec: 0,
+    scoreMoyen: 0
+  };
+
   loading = false;
   errorMessage = '';
   userRole: string = '';
   userName: string = '';
+
+  page = 0;
+  size = 100;
 
   constructor(
     private evaluationService: EvaluationService,
@@ -49,7 +53,7 @@ export class EvaluationsComponent implements OnInit {
   loadAllData(): void {
     this.loading = true;
     this.errorMessage = '';
-    
+
     forkJoin({
       evaluations: this.loadEvaluations(),
       stats: this.loadStats(),
@@ -58,26 +62,27 @@ export class EvaluationsComponent implements OnInit {
       next: ({ evaluations, stats, inspecteurs }) => {
         this.evaluations = evaluations;
         this.stats = stats;
-        
-        // Créer la map des inspecteurs
+
         if (inspecteurs.length > 0) {
-          inspecteurs.forEach(inspecteur => {
+          inspecteurs.forEach((inspecteur: User) => {
             this.inspecteursMap.set(inspecteur.matricule, inspecteur);
           });
-          
-          // Préparer les données avec les noms des inspecteurs
+
           this.evaluationsWithInspecteurs = evaluations.map(evalItem => ({
             ...evalItem,
             inspecteurDisplay: this.getInspecteurDisplay(evalItem.matriculeInspecteur)
           }));
         } else {
-          // Si pas d'inspecteurs ou rôle inspecteur
           this.evaluationsWithInspecteurs = evaluations.map(evalItem => ({
             ...evalItem,
             inspecteurDisplay: evalItem.matriculeInspecteur
           }));
         }
-        
+
+        if (!this.stats.scoreMoyen && evaluations.length > 0) {
+          this.stats.scoreMoyen = this.calculateAverageScore();
+        }
+
         this.loading = false;
       },
       error: (err) => {
@@ -96,10 +101,9 @@ export class EvaluationsComponent implements OnInit {
     return this.evaluationService.getStats().pipe(
       map(stats => {
         // Si le backend ne fournit pas scoreMoyen, on le calcule nous-mêmes
-        if (stats['scoreMoyen'] === undefined) {
+        if (stats.scoreMoyen === undefined) {
           return {
             ...stats,
-            // Le score moyen sera calculé après le chargement des évaluations
             scoreMoyen: 0
           };
         }
