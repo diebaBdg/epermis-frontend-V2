@@ -4,8 +4,10 @@ import { Observable, forkJoin, map, of } from 'rxjs';
 import { EvaluationService } from '../../services/evaluation.service';
 import { AuthService } from '../../services/auth.service';
 import { InspecteurService } from '../../services/inspecteur.service';
+import { CandidatService } from '../../services/candidat.service';
 import { Evaluation, EvaluationStats } from '../../models/evaluation.model';
 import { User } from '../../models/user.model';
+import { Candidat } from '../../models/candidat.model';
 
 @Component({
   selector: 'app-evaluations',
@@ -16,16 +18,16 @@ import { User } from '../../models/user.model';
 })
 export class EvaluationsComponent implements OnInit {
   evaluations: Evaluation[] = [];
-  evaluationsWithInspecteurs: any[] = [];
+  evaluationsWithData: any[] = [];
   inspecteursMap: Map<string, User> = new Map();
+  candidatsMap: Map<string, Candidat> = new Map();
 
   stats: EvaluationStats = {
     totalEvaluations: 0,
     admis: 0,
     ajoure: 0,
     tauxReussite: 0,
-    tauxEchec: 0,
-    scoreMoyen: 0
+    tauxEchec: 0
   };
 
   loading = false;
@@ -33,20 +35,24 @@ export class EvaluationsComponent implements OnInit {
   userRole: string = '';
   userName: string = '';
 
+  showDetailModal = false;
+  selectedEvaluation: any = null;
+
   page = 0;
   size = 100;
 
   constructor(
     private evaluationService: EvaluationService,
     private authService: AuthService,
-    private inspecteurService: InspecteurService
+    private inspecteurService: InspecteurService,
+    private candidatService: CandidatService
   ) {}
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     this.userRole = user?.role || '';
     this.userName = user?.nomComplet || '';
-    
+
     this.loadAllData();
   }
 
@@ -57,9 +63,10 @@ export class EvaluationsComponent implements OnInit {
     forkJoin({
       evaluations: this.loadEvaluations(),
       stats: this.loadStats(),
-      inspecteurs: this.userRole === 'ADMIN' ? this.loadInspecteurs() : of([])
+      inspecteurs: this.userRole === 'ADMIN' ? this.loadInspecteurs() : of([]),
+      candidats: this.loadCandidats()
     }).subscribe({
-      next: ({ evaluations, stats, inspecteurs }) => {
+      next: ({ evaluations, stats, inspecteurs, candidats }) => {
         this.evaluations = evaluations;
         this.stats = stats;
 
@@ -67,21 +74,17 @@ export class EvaluationsComponent implements OnInit {
           inspecteurs.forEach((inspecteur: User) => {
             this.inspecteursMap.set(inspecteur.matricule, inspecteur);
           });
-
-          this.evaluationsWithInspecteurs = evaluations.map(evalItem => ({
-            ...evalItem,
-            inspecteurDisplay: this.getInspecteurDisplay(evalItem.matriculeInspecteur)
-          }));
-        } else {
-          this.evaluationsWithInspecteurs = evaluations.map(evalItem => ({
-            ...evalItem,
-            inspecteurDisplay: evalItem.matriculeInspecteur
-          }));
         }
 
-        if (!this.stats.scoreMoyen && evaluations.length > 0) {
-          this.stats.scoreMoyen = this.calculateAverageScore();
-        }
+        candidats.forEach((candidat: Candidat) => {
+          this.candidatsMap.set(candidat.numeroDossier, candidat);
+        });
+
+        this.evaluationsWithData = evaluations.map(evalItem => ({
+          ...evalItem,
+          inspecteurDisplay: this.getInspecteurDisplay(evalItem.matriculeInspecteur),
+          candidatDisplay: this.getCandidatDisplay(evalItem.numeroDossierCandidat)
+        }));
 
         this.loading = false;
       },
@@ -98,22 +101,15 @@ export class EvaluationsComponent implements OnInit {
   }
 
   loadStats(): Observable<EvaluationStats> {
-    return this.evaluationService.getStats().pipe(
-      map(stats => {
-        // Si le backend ne fournit pas scoreMoyen, on le calcule nous-mêmes
-        if (stats.scoreMoyen === undefined) {
-          return {
-            ...stats,
-            scoreMoyen: 0
-          };
-        }
-        return stats;
-      })
-    );
+    return this.evaluationService.getStats();
   }
 
   loadInspecteurs(): Observable<User[]> {
     return this.inspecteurService.getInspecteurs();
+  }
+
+  loadCandidats(): Observable<Candidat[]> {
+    return this.candidatService.getCandidats({ estEvalue: true });
   }
 
   getInspecteurDisplay(matricule: string): string {
@@ -124,80 +120,12 @@ export class EvaluationsComponent implements OnInit {
     return matricule;
   }
 
-  // Méthode pour calculer le score moyen à partir des évaluations
-  calculateAverageScore(): number {
-    if (this.evaluations.length === 0) return 0;
-    
-    // Calculer le score total à partir des résultats des catégories
-    const totalScore = this.evaluations.reduce((sum, evaluation) => {
-      let evaluationScore = 0;
-      
-      // Si resultatsCategories est un tableau
-      if (Array.isArray(evaluation.resultatsCategories)) {
-        evaluationScore = evaluation.resultatsCategories.reduce((catSum: number, categorie: any) => {
-          return catSum + (categorie.score || 0);
-        }, 0);
-      }
-      // Si resultatsCategories est un objet avec criteres
-      else if (evaluation.resultatsCategories?.criteres) {
-        evaluationScore = evaluation.resultatsCategories.criteres.reduce((critSum: number, critere: any) => {
-          return critSum + (critere.points || 0);
-        }, 0);
-      }
-      // Si score directement disponible
-      else if (evaluation.resultatsCategories?.score) {
-        evaluationScore = evaluation.resultatsCategories.score;
-      }
-      
-      return sum + evaluationScore;
-    }, 0);
-    
-    return Math.round(totalScore / this.evaluations.length);
-  }
-
-  // Méthode pour obtenir le score d'une évaluation
-  getEvaluationScore(evaluation: Evaluation): string {
-    let score = 0;
-    let maxScore = 100; // Valeur par défaut
-    
-    if (Array.isArray(evaluation.resultatsCategories)) {
-      score = evaluation.resultatsCategories.reduce((sum: number, categorie: any) => {
-        return sum + (categorie.score || 0);
-      }, 0);
-      
-      // Essayer de trouver le score max
-      maxScore = evaluation.resultatsCategories.reduce((sum: number, categorie: any) => {
-        return sum + (categorie.scoreMax || 0);
-      }, 0) || 100;
+  getCandidatDisplay(numeroDossier: string): string {
+    const candidat = this.candidatsMap.get(numeroDossier);
+    if (candidat) {
+      return `${candidat.prenom} ${candidat.nom}`;
     }
-    else if (evaluation.resultatsCategories?.criteres) {
-      score = evaluation.resultatsCategories.criteres.reduce((sum: number, critere: any) => {
-        return sum + (critere.points || 0);
-      }, 0);
-    }
-    else if (evaluation.resultatsCategories?.score) {
-      score = evaluation.resultatsCategories.score;
-      maxScore = evaluation.resultatsCategories.scoreMax || 100;
-    }
-    
-    return `${score}/${maxScore}`;
-  }
-
-  // Calculer les statistiques locales si besoin
-  calculateLocalStats(): void {
-    const total = this.evaluations.length;
-    const admis = this.evaluations.filter(e => e.statut === 'ADMIS').length;
-    const ajoure = this.evaluations.filter(e => e.statut === 'AJOURNE').length;
-    const scoreMoyen = this.calculateAverageScore();
-    
-    this.stats = {
-      totalEvaluations: total,
-      admis: admis,
-      ajoure: ajoure,
-      tauxReussite: total > 0 ? (admis / total) * 100 : 0,
-      tauxEchec: total > 0 ? (ajoure / total) * 100 : 0,
-      scoreMoyen: scoreMoyen
-    };
+    return numeroDossier;
   }
 
   getBadgeClass(statut: string): string {
@@ -217,5 +145,47 @@ export class EvaluationsComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  openDetailModal(evaluation: any): void {
+    this.selectedEvaluation = evaluation;
+    this.showDetailModal = true;
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedEvaluation = null;
+  }
+
+  getResultatsCategories(): any[] {
+    if (!this.selectedEvaluation?.resultatsCategories) {
+      return [];
+    }
+
+    const resultats = this.selectedEvaluation.resultatsCategories;
+
+    if (Array.isArray(resultats)) {
+      return resultats;
+    }
+
+    if (resultats.criteres && Array.isArray(resultats.criteres)) {
+      return resultats.criteres.map((critere: any) => ({
+        nom: critere.nomCategorie || critere.nom || 'Catégorie',
+        score: critere.points || 0,
+        scoreMax: critere.pointsMax || 0
+      }));
+    }
+
+    return [];
+  }
+
+  getTotalScore(): number {
+    const categories = this.getResultatsCategories();
+    return categories.reduce((sum, cat) => sum + (cat.score || 0), 0);
+  }
+
+  getTotalScoreMax(): number {
+    const categories = this.getResultatsCategories();
+    return categories.reduce((sum, cat) => sum + (cat.scoreMax || 0), 0);
   }
 }
