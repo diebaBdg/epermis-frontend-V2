@@ -123,7 +123,5 @@ export class RolesComponent implements OnInit {
     });
   }
 
-  getUserCount(role: Role): number {
-    return Math.floor(Math.random() * 50) + 1;
-  }
+  
 }
