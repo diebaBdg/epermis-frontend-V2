@@ -17,7 +17,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background: #0891B2;
+  background: #0F5E3E;
   color: white;
   border: none;
   border-radius: 8px;
@@ -28,9 +28,9 @@
 }
 
 .btn-primary:hover {
-  background: #0E7490;
+  background: #073825;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+  box-shadow: 0 4px 12px rgba(15, 94, 62, 0.3);
 }
 
 .content-card {
@@ -274,8 +274,8 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #0891B2;
-  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+  border-color: #0F5E3E;
+  box-shadow: 0 0 0 3px rgba(15, 94, 62, 0.1);
 }
 
 .form-group textarea {
@@ -326,7 +326,7 @@
 }
 
 .toggle-wrapper input:checked + .toggle-slider {
-  background: #0891B2;
+  background: #0F5E3E;
 }
 
 .toggle-wrapper input:checked + .toggle-slider:before {

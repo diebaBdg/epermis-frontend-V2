@@ -47,7 +47,7 @@
 }
 
 .stat-card-cyan {
-  border-top: 4px solid #06B6D4;
+  border-top: 4px solid #6AA387;
 }
 
 .stat-icon {
@@ -82,7 +82,7 @@
 
 .stat-icon-cyan {
   background: #CFFAFE;
-  color: #0E7490;
+  color: #073825;
 }
 
 .stat-value {
@@ -168,7 +168,7 @@
 
 .dossier-number {
   font-weight: 600;
-  color: #0891B2;
+  color: #0F5E3E;
 }
 
 .type-badge {
@@ -217,7 +217,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #E2E8F0;
-  border-top-color: #0891B2;
+  border-top-color: #0F5E3E;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -450,7 +450,7 @@
 .score-value {
   font-family: 'Courier New', monospace;
   font-weight: 600;
-  color: #0891B2;
+  color: #0F5E3E;
   background: #F0F9FF;
   padding: 4px 8px;
   border-radius: 6px;
@@ -461,7 +461,7 @@
 .dossier-number {
   font-family: 'Courier New', monospace;
   font-weight: 600;
-  color: #0891B2;
+  color: #0F5E3E;
 }
 
 /* Style pour les cartes de stats */

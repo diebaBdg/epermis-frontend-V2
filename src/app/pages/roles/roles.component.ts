@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RoleService } from '../../services/role.service';
+import { UserService } from '../../services/user.service';
 import { Role, RoleRequest } from '../../models/role.model';
 
 @Component({
@@ -14,6 +15,7 @@ import { Role, RoleRequest } from '../../models/role.model';
 export class RolesComponent implements OnInit {
   roles: Role[] = [];
   filteredRoles: Role[] = [];
+  roleUserCounts: Map<string, number> = new Map();
   searchQuery = '';
   loading = false;
   showModal = false;
@@ -24,7 +26,10 @@ export class RolesComponent implements OnInit {
     libelle: ''
   };
 
-  constructor(private roleService: RoleService) {}
+  constructor(
+    private roleService: RoleService,
+    private userService: UserService
+  ) {}
 
   ngOnInit(): void {
     this.loadRoles();
@@ -36,13 +41,34 @@ export class RolesComponent implements OnInit {
       next: (roles) => {
         this.roles = roles;
         this.filteredRoles = roles;
-        this.loading = false;
+        this.loadUserCounts();
       },
       error: (err) => {
         console.error('Error loading roles:', err);
         this.loading = false;
       }
     });
+  }
+
+  loadUserCounts(): void {
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        this.roleUserCounts.clear();
+        users.forEach(user => {
+          const currentCount = this.roleUserCounts.get(user.role) || 0;
+          this.roleUserCounts.set(user.role, currentCount + 1);
+        });
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading user counts:', err);
+        this.loading = false;
+      }
+    });
+  }
+
+  getUserCount(roleLibelle: string): number {
+    return this.roleUserCounts.get(roleLibelle) || 0;
   }
 
   onSearch(): void {
@@ -123,5 +149,5 @@ export class RolesComponent implements OnInit {
     });
   }
 
-  
+
 }
