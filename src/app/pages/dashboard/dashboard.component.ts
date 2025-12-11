@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { CandidatService } from '../../services/candidat.service';
 import { InspecteurService } from '../../services/inspecteur.service';
 import { EvaluationService } from '../../services/evaluation.service';
@@ -38,64 +39,31 @@ export class DashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.loading = true;
 
-    this.candidatService.getStats().subscribe({
-      next: (statsData: any) => {
-        if (statsData) {
-          this.stats.totalCandidats = statsData.totalCandidats || 0;
-        }
-      },
-      error: (err) => {
-        console.error('Error loading candidat stats:', err);
-        this.candidatService.getCandidats().subscribe({
-          next: (candidats) => {
-            this.stats.totalCandidats = candidats.length;
-          },
-          error: () => {}
-        });
-      }
-    });
+    forkJoin({
+      inspecteurs: this.inspecteurService.getInspecteurs(),
+      evaluations: this.evaluationService.getMesEvaluations(),
+      typesPermis: this.typePermisService.getTypesPermis(),
+      stats: this.candidatService.getStats()
+    }).subscribe({
+      next: (results) => {
+        this.stats.inspecteursActifs = results.inspecteurs.filter(i => i.statut === 'ACTIF').length;
+        this.inspecteursDisponibles = results.inspecteurs.slice(0, 4);
 
-    this.inspecteurService.getInspecteurs().subscribe({
-      next: (inspecteurs) => {
-        this.stats.inspecteursActifs = inspecteurs.filter(i => i.statut === 'ACTIF').length;
-        this.inspecteursDisponibles = inspecteurs.slice(0, 4);
-      },
-      error: (err) => console.error('Error loading inspecteurs:', err)
-    });
+        this.recentEvaluations = results.evaluations.slice(0, 4);
+        this.stats.totalEvaluations = results.evaluations.length;
 
-    this.evaluationService.getStats().subscribe({
-      next: (statsData: any) => {
-        if (statsData) {
-          this.stats.totalEvaluations = statsData.totalEvaluations || 0;
+        this.stats.typesPermis = results.typesPermis.filter(t => t.actif).length;
+
+        if (results.stats) {
+          this.stats.totalCandidats = results.stats.totalCandidats || 0;
         }
+
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading evaluation stats:', err);
-        this.evaluationService.getMesEvaluations().subscribe({
-          next: (evaluations) => {
-            this.stats.totalEvaluations = evaluations.length;
-            this.loading = false;
-          },
-          error: () => {
-            this.loading = false;
-          }
-        });
+        console.error('Error loading dashboard data:', err);
+        this.loading = false;
       }
-    });
-
-    this.evaluationService.getMesEvaluations().subscribe({
-      next: (evaluations) => {
-        this.recentEvaluations = evaluations.slice(0, 4);
-      },
-      error: (err) => console.error('Error loading recent evaluations:', err)
-    });
-
-    this.typePermisService.getTypesPermis().subscribe({
-      next: (types) => {
-        this.stats.typesPermis = types.filter(t => t.actif).length;
-      },
-      error: (err) => console.error('Error loading types permis:', err)
     });
   }
 
