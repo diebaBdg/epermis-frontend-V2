@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RoleService } from '../../services/role.service';
 import { UserService } from '../../services/user.service';
 import { Role, RoleRequest } from '../../models/role.model';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-roles',
@@ -16,11 +17,13 @@ export class RolesComponent implements OnInit {
   roles: Role[] = [];
   filteredRoles: Role[] = [];
   roleUserCounts: Map<string, number> = new Map();
+  users: User[] = [];
   searchQuery = '';
   loading = false;
   showModal = false;
   isEditMode = false;
   selectedRole: Role | null = null;
+  viewMode: 'grid' | 'table' = 'grid'; // Ajout du mode de vue
 
   roleForm: RoleRequest = {
     libelle: ''
@@ -33,6 +36,7 @@ export class RolesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRoles();
+    this.loadUsers();
   }
 
   loadRoles(): void {
@@ -41,7 +45,8 @@ export class RolesComponent implements OnInit {
       next: (roles) => {
         this.roles = roles;
         this.filteredRoles = roles;
-        this.loadUserCounts();
+        this.calculateUserCounts();
+        this.loading = false;
       },
       error: (err) => {
         console.error('Error loading roles:', err);
@@ -50,20 +55,25 @@ export class RolesComponent implements OnInit {
     });
   }
 
-  loadUserCounts(): void {
+  loadUsers(): void {
     this.userService.getUsers().subscribe({
       next: (users) => {
-        this.roleUserCounts.clear();
-        users.forEach(user => {
-          const currentCount = this.roleUserCounts.get(user.role) || 0;
-          this.roleUserCounts.set(user.role, currentCount + 1);
-        });
-        this.loading = false;
+        this.users = users;
+        this.calculateUserCounts();
       },
       error: (err) => {
-        console.error('Error loading user counts:', err);
-        this.loading = false;
+        console.error('Error loading users:', err);
       }
+    });
+  }
+
+  calculateUserCounts(): void {
+    if (this.users.length === 0) return;
+    
+    this.roleUserCounts.clear();
+    this.users.forEach(user => {
+      const currentCount = this.roleUserCounts.get(user.role) || 0;
+      this.roleUserCounts.set(user.role, currentCount + 1);
     });
   }
 
@@ -80,6 +90,16 @@ export class RolesComponent implements OnInit {
         role.libelle.toLowerCase().includes(query)
       );
     }
+  }
+
+  // Nouvelle méthode pour basculer entre les vues
+  toggleViewMode(mode: 'grid' | 'table'): void {
+    this.viewMode = mode;
+  }
+
+  // Méthode pour obtenir les initiales (pour la vue grille)
+  getInitials(role: Role): string {
+    return role.libelle.substring(0, 2).toUpperCase();
   }
 
   openCreateModal(): void {
@@ -135,6 +155,12 @@ export class RolesComponent implements OnInit {
   }
 
   deleteRole(role: Role): void {
+    const userCount = this.getUserCount(role.libelle);
+    if (userCount > 0) {
+      alert(`Impossible de supprimer ce rôle. Il est utilisé par ${userCount} utilisateur(s).`);
+      return;
+    }
+
     if (!confirm(`Êtes-vous sûr de vouloir supprimer le rôle "${role.libelle}" ?`)) {
       return;
     }
@@ -148,6 +174,4 @@ export class RolesComponent implements OnInit {
       }
     });
   }
-
-
 }

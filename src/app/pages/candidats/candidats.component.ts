@@ -25,6 +25,7 @@ export class CandidatsComponent implements OnInit {
   showModal = false;
   isEditMode = false;
   selectedCandidat: Candidat | null = null;
+  viewMode: 'grid' | 'table' = 'grid'; // Ajout du mode de vue
 
   candidatForm: CreateCandidatRequest = {
     nom: '',
@@ -92,6 +93,16 @@ export class CandidatsComponent implements OnInit {
         candidat.numeroDossier.toLowerCase().includes(query)
       );
     }
+  }
+
+  // Nouvelle méthode pour basculer entre les vues
+  toggleViewMode(mode: 'grid' | 'table'): void {
+    this.viewMode = mode;
+  }
+
+  // Méthode pour obtenir les initiales (pour la vue grille)
+  getInitials(candidat: Candidat): string {
+    return (candidat.prenom[0] + candidat.nom[0]).toUpperCase();
   }
 
   openCreateModal(): void {

@@ -135,8 +135,10 @@
 .category-card {
   background: #F8FAFC;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 
 .category-card:hover {
@@ -148,7 +150,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .category-header h3 {
@@ -159,35 +161,51 @@
 }
 
 .type-badge {
-  padding: 4px 12px;
-  background: #DBEAFE;
-  color: #1E40AF;
+  display: inline-block;
+  padding: 4px 10px;
+  background: #FEF3C7;
+  color: #92400E;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
 }
 
-.category-score {
+.category-details {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
 }
 
-.score-label {
+.category-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
   color: #64748B;
 }
 
+.category-detail-item svg {
+  flex-shrink: 0;
+  color: #94A3B8;
+}
+
 .score-value {
-  font-size: 14px;
   font-weight: 600;
   color: #0F5E3E;
+}
+
+.criteres-label {
+  font-size: 13px;
+  color: #64748B;
+  margin: 0;
 }
 
 .category-actions {
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
+  margin-top: auto;
   padding-top: 16px;
   border-top: 1px solid #E2E8F0;
 }
@@ -228,6 +246,41 @@
   padding: 16px;
   font-size: 14px;
   color: #334155;
+}
+
+.dossier-number {
+  font-weight: 600;
+  color: #0F5E3E;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* État vide */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #94A3B8;
+}
+
+.empty-state svg {
+  margin: 0 auto 16px;
+  color: #CBD5E1;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #64748B;
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #94A3B8;
+  margin: 0;
 }
 
 /* Modal */
@@ -299,6 +352,12 @@
   padding: 0 24px 24px;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -329,6 +388,11 @@
   outline: none;
   border-color: #0F5E3E;
   box-shadow: 0 0 0 3px rgba(15, 94, 62, 0.1);
+}
+
+.form-group input:disabled {
+  background-color: #F1F5F9;
+  cursor: not-allowed;
 }
 
 /* Section critères */
@@ -389,6 +453,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .remove-critere-btn:hover {
@@ -440,4 +505,14 @@
 
 .modal-actions .btn-primary {
   flex: 1;
+}
+
+@media (max-width: 768px) {
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
 }

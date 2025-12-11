@@ -365,3 +365,114 @@
 .modal-actions .btn-primary {
   flex: 1;
 }
+
+
+.roles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.role-card {
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.role-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.role-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0F5E3E, #6AA387);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.role-card h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1E293B;
+  margin: 0 0 8px 0;
+}
+
+.role-card .role-description {
+  font-size: 14px;
+  color: #64748B;
+  margin: 0 0 16px 0;
+  min-height: 40px;
+}
+
+.role-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.user-count {
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.role-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding-top: 16px;
+  border-top: 1px solid #E2E8F0;
+}
+
+/* Styles pour le bouton de basculement de vue */
+.view-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #F1F5F9;
+  color: #64748B;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: #E2E8F0;
+  color: #1E293B;
+}
+
+.btn-icon.active {
+  background: #0F5E3E;
+  color: white;
+}
+
+.btn-icon.btn-danger:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 24px;
+}

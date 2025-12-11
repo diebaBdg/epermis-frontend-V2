@@ -13,10 +13,13 @@ import { TypePermis, CreateTypePermisRequest } from '../../models/type-permis.mo
 })
 export class TypesPermisComponent implements OnInit {
   typesPermis: TypePermis[] = [];
+  filteredTypesPermis: TypePermis[] = [];
+  searchQuery = '';
   loading = false;
   showModal = false;
   isEditMode = false;
   selectedType: TypePermis | null = null;
+  viewMode: 'grid' | 'table' = 'grid'; // Ajout du mode de vue
 
   typeForm: CreateTypePermisRequest & { actif?: boolean } = {
     code: '',
@@ -36,6 +39,7 @@ export class TypesPermisComponent implements OnInit {
     this.typePermisService.getTypesPermis().subscribe({
       next: (types) => {
         this.typesPermis = types;
+        this.filteredTypesPermis = types;
         this.loading = false;
       },
       error: (err) => {
@@ -43,6 +47,24 @@ export class TypesPermisComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  onSearch(): void {
+    if (!this.searchQuery.trim()) {
+      this.filteredTypesPermis = this.typesPermis;
+    } else {
+      const query = this.searchQuery.toLowerCase();
+      this.filteredTypesPermis = this.typesPermis.filter(type =>
+        type.code.toLowerCase().includes(query) ||
+        type.libelle.toLowerCase().includes(query) ||
+        type.description?.toLowerCase().includes(query)
+      );
+    }
+  }
+
+  // Nouvelle méthode pour basculer entre les vues
+  toggleViewMode(mode: 'grid' | 'table'): void {
+    this.viewMode = mode;
   }
 
   openCreateModal(): void {
