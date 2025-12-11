@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CandidatService } from '../../services/candidat.service';
@@ -25,7 +25,7 @@ export class CandidatsComponent implements OnInit {
   showModal = false;
   isEditMode = false;
   selectedCandidat: Candidat | null = null;
-  viewMode: 'grid' | 'table' = 'grid'; // Ajout du mode de vue
+  viewMode: 'grid' | 'table' = 'table';
 
   candidatForm: CreateCandidatRequest = {
     nom: '',
@@ -40,7 +40,8 @@ export class CandidatsComponent implements OnInit {
   constructor(
     private candidatService: CandidatService,
     private typePermisService: TypePermisService,
-    private inspecteurService: InspecteurService
+    private inspecteurService: InspecteurService,
+    private cdr: ChangeDetectorRef  // Ajout du ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -54,12 +55,14 @@ export class CandidatsComponent implements OnInit {
     this.candidatService.getCandidats().subscribe({
       next: (candidats) => {
         this.candidats = candidats;
-        this.filteredCandidats = candidats;
+        this.filteredCandidats = [...candidats];
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading candidats:', err);
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -68,6 +71,7 @@ export class CandidatsComponent implements OnInit {
     this.typePermisService.getTypesPermis().subscribe({
       next: (types) => {
         this.typesPermis = types.filter(t => t.actif);
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error loading types permis:', err)
     });
@@ -77,6 +81,7 @@ export class CandidatsComponent implements OnInit {
     this.inspecteurService.getInspecteursDisponibles().subscribe({
       next: (inspecteurs) => {
         this.inspecteurs = inspecteurs;
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error loading inspecteurs:', err)
     });
@@ -84,7 +89,7 @@ export class CandidatsComponent implements OnInit {
 
   onSearch(): void {
     if (!this.searchQuery.trim()) {
-      this.filteredCandidats = this.candidats;
+      this.filteredCandidats = [...this.candidats];
     } else {
       const query = this.searchQuery.toLowerCase();
       this.filteredCandidats = this.candidats.filter(candidat =>
@@ -93,14 +98,14 @@ export class CandidatsComponent implements OnInit {
         candidat.numeroDossier.toLowerCase().includes(query)
       );
     }
+    this.cdr.detectChanges();
   }
 
-  // Nouvelle méthode pour basculer entre les vues
   toggleViewMode(mode: 'grid' | 'table'): void {
     this.viewMode = mode;
+    this.cdr.detectChanges();
   }
 
-  // Méthode pour obtenir les initiales (pour la vue grille)
   getInitials(candidat: Candidat): string {
     return (candidat.prenom[0] + candidat.nom[0]).toUpperCase();
   }

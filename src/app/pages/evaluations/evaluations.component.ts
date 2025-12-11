@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable, forkJoin, map, of } from 'rxjs';
 import { EvaluationService } from '../../services/evaluation.service';
@@ -45,13 +45,15 @@ export class EvaluationsComponent implements OnInit {
     private evaluationService: EvaluationService,
     private authService: AuthService,
     private inspecteurService: InspecteurService,
-    private candidatService: CandidatService
+    private candidatService: CandidatService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
     this.userRole = user?.role || '';
     this.userName = user?.nomComplet || '';
+    this.cdr.detectChanges();
 
     this.loadAllData();
   }
@@ -59,6 +61,7 @@ export class EvaluationsComponent implements OnInit {
   loadAllData(): void {
     this.loading = true;
     this.errorMessage = '';
+    this.cdr.detectChanges();
 
     forkJoin({
       evaluations: this.loadEvaluations(),
@@ -87,11 +90,13 @@ export class EvaluationsComponent implements OnInit {
         }));
 
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading data:', err);
         this.errorMessage = 'Erreur lors du chargement des données';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -150,11 +155,13 @@ export class EvaluationsComponent implements OnInit {
   openDetailModal(evaluation: any): void {
     this.selectedEvaluation = evaluation;
     this.showDetailModal = true;
+    this.cdr.detectChanges();
   }
 
   closeDetailModal(): void {
     this.showDetailModal = false;
     this.selectedEvaluation = null;
+    this.cdr.detectChanges();
   }
 
   getResultatsCategories(): any[] {

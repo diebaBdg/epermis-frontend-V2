@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EvaluationService } from '../../services/evaluation.service';
@@ -22,7 +22,12 @@ export class CategoriesEvaluationComponent implements OnInit {
   showModal = false;
   isEditMode = false;
   selectedCategorie: CategorieEvaluationPermis | null = null;
-  viewMode: 'grid' | 'table' = 'grid';
+  viewMode: 'grid' | 'table' = 'table';
+
+  // Propriétés de pagination
+  currentPage = 1;
+  itemsPerPage = 6;
+  totalPages = 0;
 
   categorieForm = {
     nom: '',
@@ -33,7 +38,8 @@ export class CategoriesEvaluationComponent implements OnInit {
 
   constructor(
     private evaluationService: EvaluationService,
-    private typePermisService: TypePermisService
+    private typePermisService: TypePermisService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -43,15 +49,20 @@ export class CategoriesEvaluationComponent implements OnInit {
 
   loadCategories(): void {
     this.loading = true;
+    this.cdr.detectChanges();
+    
     this.evaluationService.getCategories().subscribe({
       next: (categories) => {
         this.categories = categories;
         this.filteredCategories = categories;
+        this.calculateTotalPages();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading categories:', err);
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -60,9 +71,49 @@ export class CategoriesEvaluationComponent implements OnInit {
     this.typePermisService.getTypesPermis().subscribe({
       next: (types) => {
         this.typesPermis = types.filter(t => t.actif);
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading types permis:', err)
+      error: (err) => {
+        console.error('Error loading types permis:', err);
+        this.cdr.detectChanges();
+      }
     });
+  }
+
+  // Méthodes de pagination
+  getPaginatedCategories(): CategorieEvaluationPermis[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.filteredCategories.slice(startIndex, endIndex);
+  }
+
+  calculateTotalPages(): void {
+    this.totalPages = Math.ceil(this.filteredCategories.length / this.itemsPerPage);
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.cdr.detectChanges();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.cdr.detectChanges();
+    }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.cdr.detectChanges();
+    }
+  }
+
+  getPageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
   onSearch(): void {
@@ -75,10 +126,14 @@ export class CategoriesEvaluationComponent implements OnInit {
         categorie.typePermis.toLowerCase().includes(query)
       );
     }
+    this.currentPage = 1; // Reset to first page on search
+    this.calculateTotalPages();
+    this.cdr.detectChanges();
   }
 
   toggleViewMode(mode: 'grid' | 'table'): void {
     this.viewMode = mode;
+    this.cdr.detectChanges();
   }
 
   openCreateModal(): void {
@@ -91,6 +146,7 @@ export class CategoriesEvaluationComponent implements OnInit {
       criteresTemplate: { criteres: [] }
     };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
   openEditModal(categorie: CategorieEvaluationPermis): void {
@@ -103,6 +159,7 @@ export class CategoriesEvaluationComponent implements OnInit {
       criteresTemplate: categorie.criteresTemplate || { criteres: [] }
     };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
   closeModal(): void {
@@ -114,6 +171,7 @@ export class CategoriesEvaluationComponent implements OnInit {
       criteresTemplate: { criteres: [] }
     };
     this.selectedCategorie = null;
+    this.cdr.detectChanges();
   }
 
   onSubmit(): void {
@@ -123,6 +181,8 @@ export class CategoriesEvaluationComponent implements OnInit {
     }
 
     this.loading = true;
+    this.cdr.detectChanges();
+    
     const formData = {
       ...this.categorieForm,
       scoreMax: parseInt(this.categorieForm.scoreMax)
@@ -138,6 +198,7 @@ export class CategoriesEvaluationComponent implements OnInit {
           console.error('Error updating categorie:', err);
           this.loading = false;
           alert('Erreur lors de la mise à jour de la catégorie');
+          this.cdr.detectChanges();
         }
       });
     } else {
@@ -150,6 +211,7 @@ export class CategoriesEvaluationComponent implements OnInit {
           console.error('Error creating categorie:', err);
           this.loading = false;
           alert('Erreur lors de la création de la catégorie');
+          this.cdr.detectChanges();
         }
       });
     }
@@ -167,6 +229,7 @@ export class CategoriesEvaluationComponent implements OnInit {
       error: (err) => {
         console.error('Error deleting categorie:', err);
         alert('Erreur lors de la suppression de la catégorie');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -176,9 +239,11 @@ export class CategoriesEvaluationComponent implements OnInit {
       nom: '',
       points: 1
     });
+    this.cdr.detectChanges();
   }
 
   removeCritere(index: number): void {
     this.categorieForm.criteresTemplate.criteres.splice(index, 1);
+    this.cdr.detectChanges();
   }
 }

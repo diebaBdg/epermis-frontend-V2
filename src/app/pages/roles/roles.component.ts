@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RoleService } from '../../services/role.service';
@@ -23,7 +23,7 @@ export class RolesComponent implements OnInit {
   showModal = false;
   isEditMode = false;
   selectedRole: Role | null = null;
-  viewMode: 'grid' | 'table' = 'grid'; // Ajout du mode de vue
+  viewMode: 'grid' | 'table' = 'table'; // Ajout du mode de vue
 
   roleForm: RoleRequest = {
     libelle: ''
@@ -31,7 +31,8 @@ export class RolesComponent implements OnInit {
 
   constructor(
     private roleService: RoleService,
-    private userService: UserService
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -41,16 +42,20 @@ export class RolesComponent implements OnInit {
 
   loadRoles(): void {
     this.loading = true;
+    this.cdr.detectChanges();
+    
     this.roleService.getRoles().subscribe({
       next: (roles) => {
         this.roles = roles;
         this.filteredRoles = roles;
         this.calculateUserCounts();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading roles:', err);
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -60,9 +65,11 @@ export class RolesComponent implements OnInit {
       next: (users) => {
         this.users = users;
         this.calculateUserCounts();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading users:', err);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -75,6 +82,7 @@ export class RolesComponent implements OnInit {
       const currentCount = this.roleUserCounts.get(user.role) || 0;
       this.roleUserCounts.set(user.role, currentCount + 1);
     });
+    this.cdr.detectChanges();
   }
 
   getUserCount(roleLibelle: string): number {
@@ -90,11 +98,13 @@ export class RolesComponent implements OnInit {
         role.libelle.toLowerCase().includes(query)
       );
     }
+    this.cdr.detectChanges();
   }
 
   // Nouvelle méthode pour basculer entre les vues
   toggleViewMode(mode: 'grid' | 'table'): void {
     this.viewMode = mode;
+    this.cdr.detectChanges();
   }
 
   // Méthode pour obtenir les initiales (pour la vue grille)
@@ -107,6 +117,7 @@ export class RolesComponent implements OnInit {
     this.selectedRole = null;
     this.roleForm = { libelle: '' };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
   openEditModal(role: Role): void {
@@ -114,12 +125,14 @@ export class RolesComponent implements OnInit {
     this.selectedRole = role;
     this.roleForm = { libelle: role.libelle };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
   closeModal(): void {
     this.showModal = false;
     this.roleForm = { libelle: '' };
     this.selectedRole = null;
+    this.cdr.detectChanges();
   }
 
   onSubmit(): void {
@@ -128,6 +141,7 @@ export class RolesComponent implements OnInit {
     }
 
     this.loading = true;
+    this.cdr.detectChanges();
 
     if (this.isEditMode && this.selectedRole) {
       this.roleService.updateRole(this.selectedRole.id, this.roleForm).subscribe({
@@ -138,6 +152,7 @@ export class RolesComponent implements OnInit {
         error: (err) => {
           console.error('Error updating role:', err);
           this.loading = false;
+          this.cdr.detectChanges();
         }
       });
     } else {
@@ -149,6 +164,7 @@ export class RolesComponent implements OnInit {
         error: (err) => {
           console.error('Error creating role:', err);
           this.loading = false;
+          this.cdr.detectChanges();
         }
       });
     }
@@ -171,6 +187,7 @@ export class RolesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error deleting role:', err);
+        this.cdr.detectChanges();
       }
     });
   }

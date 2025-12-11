@@ -51,7 +51,7 @@
 
   <!-- Vue Grille -->
   <div class="categories-grid" *ngIf="viewMode === 'grid'">
-    <div class="category-card" *ngFor="let categorie of filteredCategories">
+    <div class="category-card" *ngFor="let categorie of getPaginatedCategories()">
       <div class="category-header">
         <h3>{{ categorie.nom }}</h3>
         <span class="type-badge">{{ categorie.typePermis }}</span>
@@ -103,7 +103,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let categorie of filteredCategories">
+        <tr *ngFor="let categorie of getPaginatedCategories()">
           <td><span class="dossier-number">{{ categorie.nom }}</span></td>
           <td>
             <span class="type-badge">{{ categorie.typePermis }}</span>
@@ -138,6 +138,48 @@
     </svg>
     <h3>Aucune catégorie trouvée</h3>
     <p>Les catégories d'évaluation apparaîtront ici lorsqu'elles seront créées.</p>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container" *ngIf="filteredCategories.length > 0">
+    <div class="pagination-info">
+      <span>Page {{ currentPage }} sur {{ totalPages }}</span>
+      <span class="items-count">
+        {{ getPaginatedCategories().length }} sur {{ filteredCategories.length }} résultats
+      </span>
+    </div>
+    
+    <div class="pagination-controls">
+      <button 
+        class="btn-pagination" 
+        (click)="previousPage()"
+        [disabled]="currentPage === 1">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Précédent
+      </button>
+      
+      <div class="page-numbers">
+        <button 
+          *ngFor="let page of getPageNumbers()"
+          class="page-number"
+          [class.active]="currentPage === page"
+          (click)="goToPage(page)">
+          {{ page }}
+        </button>
+      </div>
+      
+      <button 
+        class="btn-pagination" 
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages">
+        Suivant
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </div>
 

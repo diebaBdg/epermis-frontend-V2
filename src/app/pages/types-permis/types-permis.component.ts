@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TypePermisService } from '../../services/type-permis.service';
@@ -19,7 +19,7 @@ export class TypesPermisComponent implements OnInit {
   showModal = false;
   isEditMode = false;
   selectedType: TypePermis | null = null;
-  viewMode: 'grid' | 'table' = 'grid'; // Ajout du mode de vue
+  viewMode: 'grid' | 'table' = 'table'; // Ajout du mode de vue
 
   typeForm: CreateTypePermisRequest & { actif?: boolean } = {
     code: '',
@@ -28,7 +28,10 @@ export class TypesPermisComponent implements OnInit {
     actif: true
   };
 
-  constructor(private typePermisService: TypePermisService) {}
+  constructor(
+    private typePermisService: TypePermisService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadTypesPermis();
@@ -36,15 +39,19 @@ export class TypesPermisComponent implements OnInit {
 
   loadTypesPermis(): void {
     this.loading = true;
+    this.cdr.detectChanges();
+    
     this.typePermisService.getTypesPermis().subscribe({
       next: (types) => {
         this.typesPermis = types;
         this.filteredTypesPermis = types;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading types permis:', err);
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -60,11 +67,13 @@ export class TypesPermisComponent implements OnInit {
         type.description?.toLowerCase().includes(query)
       );
     }
+    this.cdr.detectChanges();
   }
 
   // Nouvelle méthode pour basculer entre les vues
   toggleViewMode(mode: 'grid' | 'table'): void {
     this.viewMode = mode;
+    this.cdr.detectChanges();
   }
 
   openCreateModal(): void {
@@ -77,6 +86,7 @@ export class TypesPermisComponent implements OnInit {
       actif: true
     };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
   openEditModal(type: TypePermis): void {
@@ -89,6 +99,7 @@ export class TypesPermisComponent implements OnInit {
       actif: type.actif
     };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
   closeModal(): void {
@@ -100,6 +111,7 @@ export class TypesPermisComponent implements OnInit {
       actif: true
     };
     this.selectedType = null;
+    this.cdr.detectChanges();
   }
 
   onSubmit(): void {
@@ -108,6 +120,7 @@ export class TypesPermisComponent implements OnInit {
     }
 
     this.loading = true;
+    this.cdr.detectChanges();
 
     if (this.isEditMode && this.selectedType) {
       const updateData = {
@@ -124,6 +137,7 @@ export class TypesPermisComponent implements OnInit {
         error: (err) => {
           console.error('Error updating type permis:', err);
           this.loading = false;
+          this.cdr.detectChanges();
         }
       });
     } else {
@@ -141,6 +155,7 @@ export class TypesPermisComponent implements OnInit {
         error: (err) => {
           console.error('Error creating type permis:', err);
           this.loading = false;
+          this.cdr.detectChanges();
         }
       });
     }
@@ -157,6 +172,7 @@ export class TypesPermisComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error deleting type permis:', err);
+        this.cdr.detectChanges();
       }
     });
   }

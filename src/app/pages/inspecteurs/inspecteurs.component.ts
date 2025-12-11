@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InspecteurService } from '../../services/inspecteur.service';
@@ -19,7 +19,7 @@ export class InspecteursComponent implements OnInit {
   showModal = false;
   isEditMode = false;
   selectedInspecteur: User | null = null;
-  viewMode: 'grid' | 'table' = 'grid';
+  viewMode: 'grid' | 'table' = 'table';
 
   inspecteurForm = {
     matricule: '',
@@ -34,7 +34,10 @@ export class InspecteursComponent implements OnInit {
     statut: 'ACTIF'
   };
 
-  constructor(private inspecteurService: InspecteurService) {}
+  constructor(
+    private inspecteurService: InspecteurService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadInspecteurs();
@@ -42,15 +45,19 @@ export class InspecteursComponent implements OnInit {
 
   loadInspecteurs(): void {
     this.loading = true;
+    this.cdr.detectChanges();
+    
     this.inspecteurService.getInspecteurs().subscribe({
       next: (inspecteurs) => {
         this.inspecteurs = inspecteurs;
         this.filteredInspecteurs = inspecteurs;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading inspecteurs:', err);
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -66,10 +73,12 @@ export class InspecteursComponent implements OnInit {
         inspecteur.matricule.toLowerCase().includes(query)
       );
     }
+    this.cdr.detectChanges();
   }
 
   toggleViewMode(mode: 'grid' | 'table'): void {
     this.viewMode = mode;
+    this.cdr.detectChanges();
   }
 
   getInitials(inspecteur: User): string {
@@ -92,6 +101,7 @@ export class InspecteursComponent implements OnInit {
       statut: 'ACTIF'
     };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
   openEditModal(inspecteur: User): void {
@@ -110,6 +120,7 @@ export class InspecteursComponent implements OnInit {
       statut: inspecteur.statut || 'ACTIF'
     };
     this.showModal = true;
+    this.cdr.detectChanges();
   }
 
   closeModal(): void {
@@ -127,6 +138,7 @@ export class InspecteursComponent implements OnInit {
       statut: 'ACTIF'
     };
     this.selectedInspecteur = null;
+    this.cdr.detectChanges();
   }
 
   onSubmit(): void {
@@ -136,6 +148,8 @@ export class InspecteursComponent implements OnInit {
     }
 
     this.loading = true;
+    this.cdr.detectChanges();
+    
     const formData = { ...this.inspecteurForm };
 
     if (this.isEditMode && this.selectedInspecteur) {
@@ -149,6 +163,7 @@ export class InspecteursComponent implements OnInit {
           console.error('Error updating inspecteur:', err);
           this.loading = false;
           alert('Erreur lors de la mise à jour de l\'inspecteur');
+          this.cdr.detectChanges();
         }
       });
     } else {
@@ -156,6 +171,7 @@ export class InspecteursComponent implements OnInit {
       if (!formData.password) {
         alert('Le mot de passe est requis pour la création');
         this.loading = false;
+        this.cdr.detectChanges();
         return;
       }
       
@@ -168,6 +184,7 @@ export class InspecteursComponent implements OnInit {
           console.error('Error creating inspecteur:', err);
           this.loading = false;
           alert('Erreur lors de la création de l\'inspecteur');
+          this.cdr.detectChanges();
         }
       });
     }
@@ -185,6 +202,7 @@ export class InspecteursComponent implements OnInit {
       error: (err) => {
         console.error('Error deleting inspecteur:', err);
         alert('Erreur lors de la suppression de l\'inspecteur');
+        this.cdr.detectChanges();
       }
     });
   }
