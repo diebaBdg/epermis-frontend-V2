@@ -13,85 +13,50 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./forgot-password.component.css']
 })
 export class ForgotPasswordComponent {
-  login: string = '';
+  email: string = '';
   loading = false;
   error = '';
   success = false;
-  userExists = false;
-  userEmail: string = '';
 
   constructor(
     private http: HttpClient,
     private router: Router
   ) {}
 
-  checkUserExists(): void {
-    if (!this.login.trim()) {
-      this.error = 'Veuillez entrer votre identifiant (email ou matricule)';
+  onSubmit(): void {
+    if (!this.email.trim()) {
+      this.error = 'Veuillez entrer votre adresse email';
+      return;
+    }
+
+    if (!this.isValidEmail(this.email)) {
+      this.error = 'Veuillez entrer une adresse email valide';
       return;
     }
 
     this.loading = true;
     this.error = '';
     this.success = false;
-    this.userExists = false;
-    this.userEmail = '';
 
-    this.http.get(`${environment.apiUrl}/users/check-existence/${this.login}`).subscribe({
-      next: (response: any) => {
+    this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email: this.email }).subscribe({
+      next: () => {
         this.loading = false;
-        
-        if (response.exists) {
-          this.userExists = true;
-          this.userEmail = response.email || 'votre email';
-          this.success = true;
-          
-          setTimeout(() => {
-            this.router.navigate(['/reset-password', this.login]);
-          }, 3000);
-        } else {
-          this.error = 'Utilisateur non trouvé. Vérifiez votre identifiant.';
-        }
+        this.success = true;
       },
       error: (err) => {
         this.loading = false;
-        
         if (err.status === 404) {
-          this.error = 'Service temporairement indisponible. Redirection...';
-          setTimeout(() => {
-            this.router.navigate(['/reset-password', this.login]);
-          }, 2000);
+          this.error = 'Aucun compte associé à cette adresse email';
         } else {
-          this.success = true;
-          setTimeout(() => {
-            this.router.navigate(['/reset-password', this.login]);
-          }, 2000);
+          this.error = 'Une erreur est survenue. Veuillez réessayer.';
         }
       }
     });
   }
 
-  
-
-  onSubmit(): void {
-    if (!this.login.trim()) {
-      this.error = 'Veuillez entrer votre identifiant (email ou matricule)';
-      return;
-    }
-
-    this.loading = true;
-    this.error = '';
-    this.success = false;
-
-    // TODO une verification
-    setTimeout(() => {
-      this.loading = false;
-      this.success = true;
-      
-      setTimeout(() => {
-        this.router.navigate(['/reset-password', this.login]);
-      }, 2000);
-    }, 1500);
+  isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 
   goToLogin(): void {

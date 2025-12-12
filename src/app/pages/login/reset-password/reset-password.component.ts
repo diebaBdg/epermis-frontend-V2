@@ -13,16 +13,14 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./reset-password.component.css']
 })
 export class ResetPasswordComponent implements OnInit {
-  login: string = '';
-  oldPassword: string = '';
+  token: string = '';
   newPassword: string = '';
   confirmPassword: string = '';
   loading = false;
-  verifyingUser = false;
+  verifyingToken = false;
   error = '';
   success = false;
-  userExists = false;
-  showOldPassword = false;
+  tokenValid = false;
   showNewPassword = false;
   showConfirmPassword = false;
 
@@ -33,54 +31,44 @@ export class ResetPasswordComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.login = this.route.snapshot.paramMap.get('login') || '';
-    
-    // Vérifier si l'utilisateur existe quand la page charge
-    if (this.login) {
-      this.verifyUserExists();
+    this.token = this.route.snapshot.paramMap.get('token') || '';
+
+    if (this.token) {
+      this.verifyToken();
     } else {
-      this.error = 'Identifiant manquant';
+      this.error = 'Token manquant';
       setTimeout(() => {
         this.router.navigate(['/forgot-password']);
       }, 3000);
     }
   }
 
-  verifyUserExists(): void {
-    this.verifyingUser = true;
-    
-    this.http.post<{valid: boolean}>(`${environment.apiUrl}/auth/verify-password/${this.login}`, {
-      password: 'temp_check' // Mot de passe temporaire pour vérifier l'existence
-    }).subscribe({
-      next: (response) => {
-        this.verifyingUser = false;
-        // Si on arrive ici, l'utilisateur existe (même si le mot de passe est faux)
-        this.userExists = true;
+  verifyToken(): void {
+    this.verifyingToken = true;
+
+    this.http.get(`${environment.apiUrl}/auth/validate-reset-token/${this.token}`).subscribe({
+      next: () => {
+        this.verifyingToken = false;
+        this.tokenValid = true;
       },
       error: (err) => {
-        this.verifyingUser = false;
-        
-        if (err.status === 404) {
-          this.userExists = false;
-          this.error = 'Utilisateur non trouvé. Veuillez vérifier votre identifiant.';
-          
-          setTimeout(() => {
-            this.router.navigate(['/forgot-password']);
-          }, 3000);
+        this.verifyingToken = false;
+        this.tokenValid = false;
+        if (err.status === 400) {
+          this.error = 'Le lien de réinitialisation est invalide ou a expiré.';
         } else {
-          // Pour d'autres erreurs, on continue quand même
-          this.userExists = true;
+          this.error = 'Erreur lors de la validation du token.';
         }
+
+        setTimeout(() => {
+          this.router.navigate(['/forgot-password']);
+        }, 5000);
       }
     });
   }
 
-  // Reste du code inchangé...
   togglePasswordVisibility(field: string): void {
     switch (field) {
-      case 'old':
-        this.showOldPassword = !this.showOldPassword;
-        break;
       case 'new':
         this.showNewPassword = !this.showNewPassword;
         break;
@@ -110,20 +98,18 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   onSubmit(): void {
-    // Vérifier d'abord si l'utilisateur existe
-    if (!this.userExists) {
-      this.error = 'Utilisateur non trouvé. Veuillez vérifier votre identifiant.';
+    if (!this.tokenValid) {
+      this.error = 'Token invalide. Veuillez recommencer la procédure.';
       return;
     }
 
-    // Validation
-    if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
+    if (!this.newPassword || !this.confirmPassword) {
       this.error = 'Veuillez remplir tous les champs';
       return;
     }
 
     if (this.newPassword !== this.confirmPassword) {
-      this.error = 'Les nouveaux mots de passe ne correspondent pas';
+      this.error = 'Les mots de passe ne correspondent pas';
       return;
     }
 
@@ -133,39 +119,28 @@ export class ResetPasswordComponent implements OnInit {
       return;
     }
 
-    if (this.oldPassword === this.newPassword) {
-      this.error = 'Le nouveau mot de passe doit être différent de l\'ancien';
-      return;
-    }
-
     this.loading = true;
     this.error = '';
 
-    // Appel à l'API pour changer le mot de passe
-    this.http.post(`${environment.apiUrl}/auth/change-password/${this.login}`, {
-      oldPassword: this.oldPassword,
+    this.http.post(`${environment.apiUrl}/auth/reset-password`, {
+      token: this.token,
       newPassword: this.newPassword
     }).subscribe({
       next: () => {
         this.loading = false;
         this.success = true;
-        
-        // Effacer les mots de passe pour la sécurité
-        this.oldPassword = '';
+
         this.newPassword = '';
         this.confirmPassword = '';
-        
-        // Redirection vers la page de connexion après 3 secondes
+
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 3000);
       },
       error: (err) => {
         this.loading = false;
-        if (err.status === 401) {
-          this.error = 'Ancien mot de passe incorrect';
-        } else if (err.status === 404) {
-          this.error = 'Utilisateur non trouvé';
+        if (err.status === 400) {
+          this.error = 'Le lien de réinitialisation est invalide ou a expiré.';
         } else {
           this.error = 'Une erreur est survenue. Veuillez réessayer.';
         }
