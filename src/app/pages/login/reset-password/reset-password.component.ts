@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../../environments/environment.prod';
+import { catchError, timeout } from 'rxjs/operators';
+import { throwError, TimeoutError } from 'rxjs';
 
 @Component({
   selector: 'app-reset-password',
@@ -23,6 +25,7 @@ export class ResetPasswordComponent implements OnInit {
   tokenValid = false;
   showNewPassword = false;
   showConfirmPassword = false;
+email: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -46,25 +49,43 @@ export class ResetPasswordComponent implements OnInit {
   verifyToken(): void {
     this.verifyingToken = true;
 
-    this.http.get(`${environment.apiUrl}/auth/validate-reset-token/${this.token}`).subscribe({
-      next: () => {
-        this.verifyingToken = false;
-        this.tokenValid = true;
-      },
-      error: (err) => {
-        this.verifyingToken = false;
-        this.tokenValid = false;
-        if (err.status === 400) {
-          this.error = 'Le lien de réinitialisation est invalide ou a expiré.';
-        } else {
-          this.error = 'Erreur lors de la validation du token.';
-        }
+    this.http.get(`${environment.apiUrl}/auth/validate-reset-token/${this.token}`)
+      .pipe(
+        timeout(10000),
+        catchError((error: any) => {
+          this.verifyingToken = false;
+          this.tokenValid = false;
+          
+          // Vérification du timeout
+          if (error instanceof TimeoutError) {
+            this.error = 'La vérification a pris trop de temps. Veuillez réessayer.';
+          } else if (error instanceof HttpErrorResponse) {
+            // Gestion des erreurs HTTP
+            if (error.status === 400) {
+              this.error = 'Le lien de réinitialisation est invalide ou a expiré.';
+            } else if (error.status === 0) {
+              this.error = 'Impossible de contacter le serveur.';
+            } else {
+              this.error = error.error?.message || 'Erreur lors de la validation du token.';
+            }
+          } else {
+            // Autres erreurs
+            this.error = 'Erreur lors de la validation du token.';
+          }
 
-        setTimeout(() => {
-          this.router.navigate(['/forgot-password']);
-        }, 5000);
-      }
-    });
+          setTimeout(() => {
+            this.router.navigate(['/forgot-password']);
+          }, 5000);
+          
+          return throwError(() => error);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.verifyingToken = false;
+          this.tokenValid = true;
+        }
+      });
   }
 
   togglePasswordVisibility(field: string): void {
@@ -125,7 +146,35 @@ export class ResetPasswordComponent implements OnInit {
     this.http.post(`${environment.apiUrl}/auth/reset-password`, {
       token: this.token,
       newPassword: this.newPassword
-    }).subscribe({
+    })
+    .pipe(
+      timeout(30000),
+      catchError((error: any) => {
+        this.loading = false;
+        
+        // Vérification du timeout
+        if (error instanceof TimeoutError) {
+          this.error = 'La requête a pris trop de temps. Veuillez réessayer.';
+        } else if (error instanceof HttpErrorResponse) {
+          // Gestion des erreurs HTTP
+          if (error.status === 400) {
+            this.error = error.error?.message || 'Le lien de réinitialisation est invalide ou a expiré.';
+          } else if (error.status === 500) {
+            this.error = 'Erreur du serveur. Veuillez réessayer plus tard.';
+          } else if (error.status === 0) {
+            this.error = 'Impossible de contacter le serveur.';
+          } else {
+            this.error = error.error?.message || 'Une erreur est survenue. Veuillez réessayer.';
+          }
+        } else {
+          // Autres erreurs
+          this.error = 'Une erreur est survenue. Veuillez réessayer.';
+        }
+        
+        return throwError(() => error);
+      })
+    )
+    .subscribe({
       next: () => {
         this.loading = false;
         this.success = true;
@@ -136,14 +185,6 @@ export class ResetPasswordComponent implements OnInit {
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 3000);
-      },
-      error: (err) => {
-        this.loading = false;
-        if (err.status === 400) {
-          this.error = 'Le lien de réinitialisation est invalide ou a expiré.';
-        } else {
-          this.error = 'Une erreur est survenue. Veuillez réessayer.';
-        }
       }
     });
   }

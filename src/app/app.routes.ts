@@ -1,4 +1,3 @@
-// app.routes.ts - Mise à jour
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
