@@ -427,3 +427,134 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.pagination-container {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pagination-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.items-count {
+  font-size: 13px;
+  color: #94A3B8;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #F1F5F9;
+  color: #475569;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-pagination:hover:not(:disabled) {
+  background: #E2E8F0;
+  color: #1E293B;
+}
+
+.btn-pagination:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.page-number {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #F1F5F9;
+  color: #64748B;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-number:hover {
+  background: #E2E8F0;
+  color: #1E293B;
+}
+
+.page-number.active {
+  background: #0F5E3E;
+  color: white;
+}
+
+/* État vide */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #94A3B8;
+}
+
+.empty-state svg {
+  margin: 0 auto 16px;
+  color: #CBD5E1;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #64748B;
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #94A3B8;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .candidats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pagination-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pagination-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .page-numbers {
+    display: none;
+  }
+}

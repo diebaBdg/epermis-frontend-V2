@@ -2,17 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { LogoutModalComponent } from '../pages/login/logout-modal.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LogoutModalComponent],
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.css']
 })
 export class LayoutComponent implements OnInit {
   currentUser: any;
   sidebarCollapsed = false;
+  showLogoutModal = false;
 
   constructor(
     private authService: AuthService,
@@ -26,7 +28,16 @@ export class LayoutComponent implements OnInit {
   }
 
   logout(): void {
+    this.showLogoutModal = true;
+  }
+
+  confirmLogout(): void {
+    this.showLogoutModal = false;
     this.authService.logout();
+  }
+
+  cancelLogout(): void {
+    this.showLogoutModal = false;
   }
 
   toggleSidebar(): void {
@@ -35,6 +46,10 @@ export class LayoutComponent implements OnInit {
 
   isAdmin(): boolean {
     return this.currentUser?.role === 'ADMIN';
+  }
+
+  isInspecteur(): boolean {
+    return this.currentUser?.role === 'INSPECTEUR';
   }
 
   getInitials(): string {

@@ -14,6 +14,7 @@ import { TypePermisService } from '../../services/type-permis.service';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
+   currentUser: any;
   stats = {
     totalCandidats: 0,
     inspecteursActifs: 0,
@@ -145,4 +146,12 @@ export class DashboardComponent implements OnInit {
     const names = name.split(' ');
     return names.map(n => n[0]).join('').substring(0, 2).toUpperCase();
   }
+  isAdmin(): boolean {
+    return this.currentUser?.role === 'ADMIN';
+  }
+
+  isInspecteur(): boolean {
+    return this.currentUser?.role === 'INSPECTEUR';
+  }
+
 }

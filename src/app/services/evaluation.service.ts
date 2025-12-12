@@ -28,7 +28,6 @@ export class EvaluationService {
     });
   }
 
-
   private loadInspecteurs(): Observable<User[]> {
     return this.http.get<User[]>(`${this.usersUrl}/by-role/INSPECTEUR`, {
       headers: this.getAuthHeaders()
@@ -43,7 +42,6 @@ export class EvaluationService {
   }
 
   getInspecteurInfo(matricule: string): Observable<User | undefined> {
-
     const cached = this.inspecteursCache.get(matricule);
     if (cached) {
       return of(cached);
@@ -66,17 +64,15 @@ export class EvaluationService {
     );
   }
 
+  // Méthode intelligente qui route automatiquement selon le rôle
   getEvaluations(): Observable<Evaluation[]> {
     const user = this.authService.getCurrentUser();
     
     if (user?.role === 'ADMIN') {
-      // Admin voit toutes les évaluations
       return this.getAllEvaluations();
     } else if (user?.role === 'INSPECTEUR') {
-      // Inspecteur ne voit que ses évaluations
       return this.getMesEvaluations();
     } else {
-      // Par défaut, on retourne un tableau vide
       return of([]);
     }
   }
@@ -113,13 +109,10 @@ export class EvaluationService {
     const user = this.authService.getCurrentUser();
     
     if (user?.role === 'ADMIN') {
-      // Admin: statistiques globales
       return this.getGlobalStats();
     } else if (user?.role === 'INSPECTEUR') {
-      // Inspecteur: ses statistiques
       return this.getMesStats();
     } else {
-      // Par défaut, retourne des stats vides
       return new Observable<EvaluationStats>(observer => {
         observer.next({
           totalEvaluations: 0,
@@ -147,28 +140,26 @@ export class EvaluationService {
     });
   }
 
-  // Statistiques par inspecteur (Admin)
+  // Statistiques par inspecteur (Admin uniquement)
   getStatsByInspecteur(inspecteurMatricule: string): Observable<EvaluationStats> {
     return this.http.get<EvaluationStats>(`${this.apiUrl}/inspecteur/${inspecteurMatricule}/stats`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  // Évaluations par inspecteur (Admin)
+  // Évaluations par inspecteur (Admin uniquement)
   getEvaluationsByInspecteur(inspecteurMatricule: string): Observable<Evaluation[]> {
     return this.http.get<Evaluation[]>(`${this.apiUrl}/inspecteur/${inspecteurMatricule}`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  // Évaluations par type de permis
   getEvaluationsByTypePermis(codeTypePermis: string): Observable<Evaluation[]> {
     return this.http.get<Evaluation[]>(`${this.apiUrl}/type-permis/${codeTypePermis}`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  // Évaluations par candidat
   getEvaluationsByCandidat(numeroDossierCandidat: string): Observable<Evaluation[]> {
     return this.http.get<Evaluation[]>(`${this.apiUrl}/candidat/${numeroDossierCandidat}`, {
       headers: this.getAuthHeaders()

@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LoginRequest } from '../../models/user.model';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -19,11 +19,16 @@ export class LoginComponent {
   };
   loading = false;
   error = '';
+  showPassword = false;
 
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
 
   onSubmit(): void {
     if (!this.credentials.login || !this.credentials.password) {
@@ -41,7 +46,11 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading = false;
-        this.error = 'Identifiants incorrects';
+        if (err.status === 401) {
+          this.error = 'Identifiant ou mot de passe incorrect';
+        } else {
+          this.error = 'Une erreur est survenue. Veuillez réessayer.';
+        }
       }
     });
   }

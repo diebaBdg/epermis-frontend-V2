@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <div class="stat-card">
+    <div class="stat-card" *ngIf="isAdmin()">
       <div class="stat-header">
         <h3>Inspecteurs Actifs</h3>
         <div class="stat-icon inspectors">
@@ -174,7 +174,7 @@
       </div>
     </div>
 
-    <div class="content-card">
+    <div class="content-card" *ngIf="isAdmin()">
       <div class="card-header">
         <h2>Inspecteurs Disponibles</h2>
         <p class="card-subtitle">Inspecteurs actifs aujourd'hui</p>
