@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { catchError, map, Observable, of, tap } from 'rxjs';
-import { environment } from '../../environments/environment.prod';
+import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { Evaluation, CategorieEvaluationPermis, EvaluationStats } from '../models/evaluation.model';
 import { User } from '../models/user.model';
